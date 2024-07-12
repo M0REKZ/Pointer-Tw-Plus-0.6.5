@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #ifndef ENGINE_SERVER_H
 #define ENGINE_SERVER_H
+#include <string>
 #include "kernel.h"
 #include "message.h"
 
@@ -13,6 +14,9 @@ protected:
 	int m_TickSpeed;
 
 public:
+
+// for spectators to stay spectators after map change
+	std::string m_playerNames[16]; // MAX_CLIENTS
 	/*
 		Structure: CClientInfo
 	*/
@@ -66,6 +70,7 @@ public:
 
 	virtual void DemoRecorder_HandleAutoStart() = 0;
 	virtual bool DemoRecorder_IsRecording() = 0;
+	
 };
 
 class IGameServer : public IInterface
