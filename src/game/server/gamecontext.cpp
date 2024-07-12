@@ -10,6 +10,9 @@
 #include <game/collision.h>
 #include <game/server/entities/loltext.h>
 #include <game/gamecore.h>
+#include <string>
+#include <iostream>
+
 #include "gamemodes/dm.h"
 #include "gamemodes/tdm.h"
 #include "gamemodes/ctf.h"
@@ -27,9 +30,6 @@ void CGameContext::Construct(int Resetting)
 {
 	m_Resetting = 0;
 	m_pServer = 0;
-
-	for(int i = 0; i < MAX_CLIENTS; i++)
-		m_apPlayers[i] = 0;
 
 	m_pController = 0;
 	m_VoteCloseTime = 0;
@@ -147,8 +147,12 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 				ForceDir = normalize(Diff);
 			l = 1-clamp((l-InnerRadius)/(Radius-InnerRadius), 0.0f, 1.0f);
 			float Dmg = 6 * l;
-			if((int)Dmg)
-				apEnts[i]->TakeDamage(ForceDir*Dmg*2, (int)Dmg, Owner, Weapon);
+			if((int)Dmg) {
+				vec2 force = ForceDir*Dmg*2;
+				if (Owner < 0 && !g_Config.m_SvGrenadeFountainHarm) // if the source is a grenade fountain, maybe do not do harm
+					Dmg = 0;
+				apEnts[i]->TakeDamage(force, (int)Dmg, Owner, Weapon);
+			}
 		}
 	}
 }
@@ -545,6 +549,16 @@ void CGameContext::OnClientPredictedInput(int ClientID, void *pInput)
 void CGameContext::OnClientEnter(int ClientID)
 {
 	//world.insert_entity(&players[client_id]);
+	std::string name = Server()->ClientName(ClientID);
+	
+	//Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", Server()->ClientName(ClientID));
+	//std::cout << m_playerNames[ClientID] << "=?" << name << "\n";
+	if (Server()->m_playerNames[ClientID].compare(name) == 0) {
+		m_apPlayers[ClientID]->SetTeam(TEAM_SPECTATORS);
+	}
+
+	m_client_msgcount[ClientID] = 0;
+
 	m_apPlayers[ClientID]->Respawn();
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), m_pController->GetTeamName(m_apPlayers[ClientID]->GetTeam()));
@@ -646,12 +660,18 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			
 			// trim right and set maximum length to 128 utf8-characters //updated to 512
 			int Length = 0;
+			char msg[512];
+			for (int i = 0; i < 512; i++) {
+				msg[i] = ' ';
+			}
 			const char *p = pMsg->m_pMessage;
 			const char *pEnd = 0;
 			while(*p)
  			{
 				const char *pStrOld = p;
 				int Code = str_utf8_decode(&p);
+
+				msg[Length] = *pStrOld;
 
 				// check if unicode is not empty
 				if(Code > 0x20 && Code != 0xA0 && Code != 0x034F && (Code < 0x2000 || Code > 0x200F) && (Code < 0x2028 || Code > 0x202F) &&
@@ -678,6 +698,66 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			pPlayer->m_LastChat = Server()->Tick();
 
+			// poor protection against discordinvites (maybe remove this entirely)
+
+			// m_client_msgcount[ClientID] = m_client_msgcount[ClientID] + 1;
+
+			// int i = 0;
+			// int j = 0;
+			// char test[512] = "discord.gg/";
+			// bool badmsg = false;
+			// if (g_Config.m_SvDiscordinviteProtection > 0 && (m_client_msgcount[ClientID] == 1 || m_client_msgcount[ClientID] == 2)) {
+			// 	while (i < 512) {
+			// 		if (msg[i] == test[j]) {
+			// 			j++;
+			// 			if (j > 9) {
+			// 				badmsg = true;
+			// 				//Server()->SetClientName(ClientID, "bot");
+			// 				//m_Mute.AddMute(ClientID, g_Config.m_SvMuteDuration);
+			// 				if (g_Config.m_SvDiscordinviteProtection == 2) {
+			// 					Server()->Kick(ClientID, "bot");
+			// 					return;
+			// 				}
+			// 			}
+			// 		} else {
+			// 			j = 0;
+			// 		}
+			// 		i++;
+			// 	}
+			// }
+			// i = 0;
+			// j = 0;
+			// char test2[128] = "bot";
+			// if (g_Config.m_SvDiscordinviteProtection) {
+			// 	while (i < 128) {
+			// 		if (msg[i] == test2[j]) {
+			// 			j++;
+			// 			if (j > 2) {
+			// 				badmsg = true;
+			// 			}
+			// 		} else {
+			// 			j = 0;
+			// 		}
+			// 		i++;
+			// 	}
+			// }
+			// i = 0;
+			// j = 0;
+			// char test3[128] = "client";
+			// if (g_Config.m_SvDiscordinviteProtection) {
+			// 	while (i < 128) {
+			// 		if (msg[i] == test3[j]) {
+			// 			j++;
+			// 			if (j > 5) {
+			// 				badmsg = true;
+			// 			}
+			// 		} else {
+			// 			j = 0;
+			// 		}
+			// 		i++;
+			// 	}
+			// }
+
 			//Check if the player is muted
 			CMute::CMuteEntry *pMute = m_Mute.Muted(ClientID);
 			if(pMute)
@@ -689,7 +769,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				return;
 			}
 			//mute the player if he's spamming
-			else if(g_Config.m_SvMuteDuration && ((pPlayer->m_ChatTicks += g_Config.m_SvChatValue) > g_Config.m_SvChatThreshold))
+			else if(/*badmsg ||*//*m_SvDiscordinviteProtection, should be removed*/ (g_Config.m_SvMuteDuration && ((pPlayer->m_ChatTicks += g_Config.m_SvChatValue) > g_Config.m_SvChatThreshold)))
 			{
 				m_Mute.AddMute(ClientID, g_Config.m_SvMuteDuration);
 				pPlayer->m_ChatTicks = 0;
@@ -1048,7 +1128,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		{
 			CNetMsg_Cl_Emoticon *pMsg = (CNetMsg_Cl_Emoticon *)pRawMsg;
 
-			if(g_Config.m_SvSpamprotection && pPlayer->m_LastEmote && pPlayer->m_LastEmote+Server()->TickSpeed()*3 > Server()->Tick())
+			if(!g_Config.m_SvSpamEmoticons && (g_Config.m_SvSpamprotection && pPlayer->m_LastEmote && pPlayer->m_LastEmote+Server()->TickSpeed()*3 > Server()->Tick()))
 				return;
 
 			pPlayer->m_LastEmote = Server()->Tick();
@@ -1760,7 +1840,7 @@ void CGameContext::ConKill(IConsole::IResult *pResult, void *pUserData)
 		pSelf->GetPlayerChar(ClientID)->Die(ClientID, WEAPON_WORLD);
 }
 
-#ifdef USECHEATS
+// #ifdef USECHEATS
 void CGameContext::ConGive(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1860,7 +1940,7 @@ void CGameContext::ConTeleport(IConsole::IResult *pResult, void *pUserData)
 			pSelf->m_apPlayers[TeleFrom]->m_ViewPos = pSelf->m_apPlayers[TeleTo]->m_ViewPos;
 	}
 }
-#endif
+// #endif
 
 void CGameContext::OnConsoleInit()
 {
@@ -1899,12 +1979,12 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("set_name", "ir", CFGFLAG_SERVER, ConSetName, this, "Set the name of a player");
 	Console()->Register("set_clan", "ir", CFGFLAG_SERVER, ConSetClan, this, "Set the clan of a player");
 	Console()->Register("kill", "i", CFGFLAG_SERVER, ConKill, this, "Kill a player");
-#ifdef USECHEATS
+// #ifdef USECHEATS
 	Console()->Register("give", "ii?i", CFGFLAG_SERVER, ConGive, this, "Give a player the a weapon (-2=Award;-1=All weapons;0=Hammer;1=Gun;2=Shotgun;3=Grenade;4=Riffle,5=Ninja)");
 	Console()->Register("takeweapon", "ii", CFGFLAG_SERVER, ConTakeWeapon, this, "Takes away a weapon of a player (-2=Award;-1=All weapons;0=Hammer;1=Gun;2=Shotgun;3=Grenade;4=Riffle");
 	Console()->Register("tele", "ii", CFGFLAG_SERVER, ConTeleport, this, "Teleports a player to another");
 	Console()->Register("teleport", "ii", CFGFLAG_SERVER, ConTeleport, this, "Teleports a player to another");
-#endif
+// #endif
 	m_Mute.OnConsoleInit(m_pConsole);
 }
 
@@ -1969,7 +2049,6 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	num_spawn_points[1] = 0;
 	num_spawn_points[2] = 0;
 	*/
-
 	for(int y = 0; y < pTileMap->m_Height; y++)
 	{
 		for(int x = 0; x < pTileMap->m_Width; x++)

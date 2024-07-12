@@ -11,12 +11,14 @@ public:
 	static const int ms_PhysSize = 14;
 	CCharacter *m_pCarryingCharacter;
 	vec2 m_Vel;
-	vec2 m_StandPos;
+	vec2 m_StandPositions[10];
+	int m_no_stands;
 
 	int m_Team;
 	int m_AtStand;
 	int m_DropTick;
 	int m_GrabTick;
+	int m_inTele;
 
 	CFlag(CGameWorld *pGameWorld, int Team);
 

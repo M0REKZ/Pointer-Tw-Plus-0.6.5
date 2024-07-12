@@ -9,6 +9,10 @@ class CGameControllerCTF : public IGameController
 {
 public:
 	class CFlag *m_apFlags[2];
+	vec2 m_flagstands_0[10];
+	int m_flagstand_temp_i_0;
+	vec2 m_flagstands_1[10];
+	int m_flagstand_temp_i_1;
 
 	CGameControllerCTF(class CGameContext *pGameServer, int);
 	virtual void DoWincheck();

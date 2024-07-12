@@ -6,6 +6,7 @@
 #include <engine/shared/config.h>
 #include <stdio.h>
 
+// return value: true if message should be sent publicly, false if it's a command and the msg should not be sent to others.
 bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMessage, int *pTeam)
 {
 	if(StrLeftComp(pMessage, "go") || StrLeftComp(pMessage, "stop") || StrLeftComp(pMessage, "restart"))
@@ -42,6 +43,43 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 		SendChatTarget(ClientID, "Credits goes to the whole Teeworlds-community and especially");
 		SendChatTarget(ClientID, "to BotoX, Tom and Greyfox. This mod has some of their ideas included.");
 		SendChatTarget(ClientID, "Also thanks to fisted and eeeee for their amazing loltext.");
+		SendChatTarget(ClientID, "Slightly edited by Pointer.");
+		return false;
+	}
+	else if(StrLeftComp(pMessage, "help"))
+	{
+		if (StrLeftComp(GameType(), "DM+")) {
+			SendChatTarget(ClientID, "DM+ gametype: 'death match'. Kill other tees for points. You can pick up weapons to use. Pick up hearts and shields to restore your health and armor!");
+		} else if (StrLeftComp(GameType(), "CTF+")) {
+			SendChatTarget(ClientID, "CTF+ gametype: 'capture the flag'. Pick up the flag of the other team and bring it to your own flag for points. You can pick up weapons to use. Pick up hearts and shields to restore your health and armor!");
+		} else if (StrLeftComp(GameType(), "TDM+")) {
+			SendChatTarget(ClientID, "TDM+ gametype: 'team death match'. Kill tees of the other team for points. You can pick up weapons to use. Pick up hearts and shields to restore your health and armor!");
+		} 
+		else if (StrLeftComp(GameType(), "gDM+")) {
+			SendChatTarget(ClientID, "gDM+ gametype: 'death match'. Kill other tees for points. You can only use your grenade launcher, and it insta-kills");
+		} else if (StrLeftComp(GameType(), "gCTF+")) {
+			SendChatTarget(ClientID, "gCTF+ gametype: 'capture the flag'. Pick up the flag of the other team and bring it to your own flag for points. You can only use your grenade launcher, and it insta-kills");
+		} else if (StrLeftComp(GameType(), "gTDM+")) {
+			SendChatTarget(ClientID, "gTDM+ gametype: 'team death match'. Kill tees of the other team for points. You can only use your grenade launcher, and it insta-kills");
+		} 
+		else if (StrLeftComp(GameType(), "iDM+")) {
+			SendChatTarget(ClientID, "iDM+ gametype: 'death match'. Kill other tees for points. You can only use your laser rifle, and it insta-kills");
+		} else if (StrLeftComp(GameType(), "iCTF+")) {
+			SendChatTarget(ClientID, "iCTF+ gametype: 'capture the flag'. Pick up the flag of the other team and bring it to your own flag for points. You can only use your laser rifle, and it insta-kills");
+		} else if (StrLeftComp(GameType(), "iTDM+")) {
+			SendChatTarget(ClientID, "iTDM+ gametype: 'team death match'. Kill tees of the other team for points. You can only use your laser rifle, and it insta-kills");
+		} 
+		else if (StrLeftComp(GameType(), "iFreeze+")) {
+			SendChatTarget(ClientID, "iFreeze gametype: freeze all tees of the other team to win. Stand near a frozen teammate to melt them.");
+		}
+		else {
+			SendChatTarget(ClientID, "The current gametype is unknown");
+		}
+		// SendChatTarget(ClientID, "DM gametype: 'death match'; you kill other tees, and get points. The player with the most points wins.");
+		// SendChatTarget(ClientID, "TDM gametype: same as dm, but with teams.");
+		// SendChatTarget(ClientID, "CTF gametype: 'capture the flag'; take the other team's flag to your own, and get points for your team.");
+		// SendChatTarget(ClientID, "(g) stand for grenade; (i) for instagib.");
+		// SendChatTarget(ClientID, "iFreeze gametype: freeze all tees of the other team to win. Stand near your teammates to melt them.");
 		return false;
 	}
 	else if(StrLeftComp(pMessage, "cmdlist"))
@@ -50,11 +88,16 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 		SendChatTarget(ClientID, "\"/info\" Information about the mod");
 		SendChatTarget(ClientID, "\"/credits\" See some credits");
 		SendChatTarget(ClientID, "\"/stats\" Show player stats");
+		SendChatTarget(ClientID, "\"/help\" Show information about the current gamemode");
 
 		if(g_Config.m_SvPrivateMessage || AuthLevel)
 		{
-			SendChatTarget(ClientID, "\"/sayto <Name/ID> <Msg>\" Send a private message to a player");
-			SendChatTarget(ClientID, "\"/r <Msg>\" Answer to the player, the last PM came from");
+			SendChatTarget(ClientID, "\"/w <Name/ID> <Msg>\" Send a private message to a player");
+			SendChatTarget(ClientID, "\"/c <Msg>\" Answer to the player, the last PM came from");
+		}
+		if(g_Config.m_SvChatMe || AuthLevel)
+		{
+			SendChatTarget(ClientID, "\"/me <Msg>\" will display <yourname> <Msg> in the chat");
 		}
 
 		if(g_Config.m_SvStopGoFeature)
@@ -208,7 +251,7 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 
 		return false;
 	}
-	else if((Len=StrLeftComp(pMessage, "sayto")) || (Len=StrLeftComp(pMessage, "st")) || (Len=StrLeftComp(pMessage, "pm")))
+	else if((Len=StrLeftComp(pMessage, "sayto")) || (Len=StrLeftComp(pMessage, "st")) || (Len=StrLeftComp(pMessage, "pm")) || (Len=StrLeftComp(pMessage, "w")))
 	{
 		if(!g_Config.m_SvPrivateMessage && !AuthLevel)
 			SendChatTarget(ClientID, "This feature is not available at the moment.");
@@ -244,9 +287,11 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 						str_format(aBuf, sizeof(aBuf), "You received a private message from %s (ID: %d)", Server()->ClientName(ClientID), ClientID);
 						SendChatTarget(ReceiverID, aBuf);
 
-						str_format(aBuf, sizeof(aBuf), "%s: %s", Server()->ClientName(ClientID), pMsg);
+						str_format(aBuf, sizeof(aBuf), "← %s: %s", Server()->ClientName(ClientID), pMsg);
 						SendChatTarget(ReceiverID, aBuf);
-						SendChatTarget(ClientID, "PM successfully sent");
+
+						str_format(aBuf, sizeof(aBuf), "→ %s: %s", Server()->ClientName(ReceiverID), pMsg);
+						SendChatTarget(ClientID, aBuf);
 
 						m_apPlayers[ReceiverID]->m_LastPMReceivedFrom = ClientID;
 						m_apPlayers[ClientID]->m_LastPMReceivedFrom = ReceiverID;
@@ -261,7 +306,40 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 		}
 		return false;
 	}
-	else if((Len=StrLeftComp(pMessage, "ans")) || (Len=StrLeftComp(pMessage, "r")))
+	else if(Len=StrLeftComp(pMessage, "me"))
+	{
+		if(!g_Config.m_SvChatMe && !AuthLevel)
+			SendChatTarget(ClientID, "This feature is not available at the moment.");
+		else
+		{
+			int ReceiverID = -1;
+
+			char *pMsg = str_skip_whitespaces(const_cast<char*>(pMessage + Len));
+
+			if(pMsg[0] == '\0')
+			{
+				SendChatTarget(ClientID, "Usage: \"/me <Message>\"");
+				return false;
+			}
+
+			int Len = ParsePlayerName(pMsg, &ReceiverID);
+			pMsg = str_skip_whitespaces(pMsg + Len);
+
+			if(pMsg[0] == '\0')
+				SendChatTarget(ClientID, "Your message is empty");
+			else
+			{
+				char aBuf[512];
+
+				str_format(aBuf, sizeof(aBuf), "### '%s' %s", Server()->ClientName(ClientID), pMsg);
+				SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+
+				Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "ME", aBuf);
+			}
+		}
+		return false;
+	}
+	else if((Len=StrLeftComp(pMessage, "ans")) || (Len=StrLeftComp(pMessage, "r") || (Len=StrLeftComp(pMessage, "c"))))
 	{
 		if(!g_Config.m_SvPrivateMessage && !AuthLevel)
 			SendChatTarget(ClientID, "This feature is not available at the moment.");
@@ -277,9 +355,15 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 				else
 				{
 					char aBuf[512];
-					str_format(aBuf, sizeof(aBuf), "%s: %s", Server()->ClientName(ClientID), pMsg);
+					// str_format(aBuf, sizeof(aBuf), "%s: %s", Server()->ClientName(ClientID), pMsg);
+					// SendChatTarget(LastChatterID, aBuf);
+					// SendChatTarget(ClientID, "PM successfully sent");
+
+					str_format(aBuf, sizeof(aBuf), "← %s: %s", Server()->ClientName(ClientID), pMsg);
 					SendChatTarget(LastChatterID, aBuf);
-					SendChatTarget(ClientID, "PM successfully sent");
+
+					str_format(aBuf, sizeof(aBuf), "→ %s: %s", Server()->ClientName(LastChatterID), pMsg);
+					SendChatTarget(ClientID, aBuf);
 
 					m_apPlayers[LastChatterID]->m_LastPMReceivedFrom = ClientID;
 					m_apPlayers[ClientID]->m_LastPMReceivedFrom = LastChatterID;
@@ -293,7 +377,7 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 				if(LastChatterID == -1)
 					SendChatTarget(ClientID, "Please first write a PM with /sayto");
 				else if(LastChatterID == -2)
-					SendChatTarget(ClientID, "The original player leaved, please use /sayto to write a new PM");
+					SendChatTarget(ClientID, "The original player left, please use /sayto to write a new PM");
 				else //dafuq?
 					SendChatTarget(ClientID, "Something went kinda wrong. Use /sayto");
 			}
@@ -353,7 +437,8 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 					m_apPlayers[ID]->SetTeam(TEAM_SPECTATORS);
 			}
 		}
-		return true;
+		else {SendChatTarget(ClientID, "No such command. Type \"/cmdlist\" to get a list of available commands");}
+		return false; //true;
 	}
 	else if(StrLeftComp(pMessage, "red"))
 	{
@@ -368,7 +453,8 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 					m_apPlayers[ID]->SetTeam(TEAM_RED);
 			}
 		}
-		return true;
+		else {SendChatTarget(ClientID, "No such command. Type \"/cmdlist\" to get a list of available commands");}
+		return false; //true;
 	}
 	else if(StrLeftComp(pMessage, "blue"))
 	{
@@ -383,7 +469,8 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 					m_apPlayers[ID]->SetTeam(TEAM_BLUE);
 			}
 		}
-		return true;
+		else {SendChatTarget(ClientID, "No such command. Type \"/cmdlist\" to get a list of available commands");}
+		return false; //true;
 	}
 	else
 		SendChatTarget(ClientID, "No such command. Type \"/cmdlist\" to get a list of available commands");

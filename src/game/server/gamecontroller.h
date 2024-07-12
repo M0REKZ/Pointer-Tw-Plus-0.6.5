@@ -4,6 +4,8 @@
 #define GAME_SERVER_GAMECONTROLLER_H
 
 #include <base/vmath.h>
+#include <stdio.h>
+//#include <string>
 
 /*
 	Class: Game Controller
@@ -59,6 +61,8 @@ protected:
 	int m_GameFlags;
 	int m_UnbalancedTick;
 	bool m_ForceBalanced;
+
+	//std::string m_playerNames[16]; // MAX_CLIENTS
 
 public:
 	const char *m_pGameType;

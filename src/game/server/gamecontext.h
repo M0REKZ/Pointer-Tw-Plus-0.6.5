@@ -9,12 +9,14 @@
 
 #include <game/layers.h>
 #include <game/voting.h>
+//#include <string>
 
 #include "eventhandler.h"
 #include "gamecontroller.h"
 #include "gameworld.h"
 #include "player.h"
 #include "mute.h"
+
 
 /*
 	Tick
@@ -46,6 +48,7 @@ class CGameContext : public IGameServer
 	CCollision m_Collision;
 	CNetObjHandler m_NetObjHandler;
 	CTuningParams m_Tuning;
+	int m_client_msgcount[MAX_CLIENTS];
 
 	static void ConTuneParam(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneReset(IConsole::IResult *pResult, void *pUserData);
@@ -75,17 +78,19 @@ class CGameContext : public IGameServer
 	static void ConSetName(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetClan(IConsole::IResult *pResult, void *pUserData);
 	static void ConKill(IConsole::IResult *pResult, void *pUserData);
-#ifdef USECHEATS
+// #ifdef USECHEATS
 	static void ConGive(IConsole::IResult *pResult, void *pUserData);
 	static void ConTakeWeapon(IConsole::IResult *pResult, void *pUserData);
 	static void ConTeleport(IConsole::IResult *pResult, void *pUserData);
-#endif
+// #endif
 
 	CGameContext(int Resetting);
 	void Construct(int Resetting);
 
 	bool m_Resetting;
 public:
+	//std::string m_playerNames[16]; // MAX_CLIENTS
+
 	IServer *Server() const { return m_pServer; }
 	class IConsole *Console() { return m_pConsole; }
 	CCollision *Collision() { return &m_Collision; }

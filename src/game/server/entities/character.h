@@ -151,6 +151,9 @@ private:
 	bool m_SentCampMsg;
 	int m_CampTick;
 	vec2 m_CampPos;
+
+	bool m_inTele; // whether the player is in a teleport or not
+	int m_slowDeathTick; // how many ticks are left before being hurt, while in a slow death zone.
 };
 
 #endif

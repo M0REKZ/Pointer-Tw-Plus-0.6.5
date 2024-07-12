@@ -10,6 +10,7 @@ CFlag::CFlag(CGameWorld *pGameWorld, int Team)
 	m_ProximityRadius = ms_PhysSize;
 	m_pCarryingCharacter = NULL;
 	m_GrabTick = 0;
+	m_no_stands = 1;
 
 	Reset();
 }
@@ -18,7 +19,9 @@ void CFlag::Reset()
 {
 	m_pCarryingCharacter = NULL;
 	m_AtStand = 1;
-	m_Pos = m_StandPos;
+
+	int n = rand() % m_no_stands;
+	m_Pos = m_StandPositions[n];
 	m_Vel = vec2(0,0);
 	m_GrabTick = 0;
 }

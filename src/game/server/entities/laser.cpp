@@ -5,7 +5,7 @@
 #include <engine/shared/config.h>
 #include "laser.h"
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner)
+CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int clockwise)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
@@ -14,10 +14,10 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_Dir = Direction;
 	m_Bounces = 0;
 	m_EvalTick = 0;
+	m_Clockwise = clockwise;
 	GameWorld()->InsertEntity(this);
 	DoBounce();
 }
-
 
 bool CLaser::HitCharacter(vec2 From, vec2 To)
 {
@@ -44,42 +44,67 @@ void CLaser::DoBounce()
 		return;
 	}
 
-	vec2 To = m_Pos + m_Dir * m_Energy;
+	if (g_Config.m_SvPlasmaGun) {
+		vec2 new_dir = m_Dir;
 
-	if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
-	{
+		double deg = 20*m_Clockwise;
+
+		double theta = deg / 180.0 * M_PI;
+		double c = cos(theta);
+		double s = sin(theta);
+		double tx = new_dir.x * c - new_dir.y * s;
+		double ty = new_dir.x * s + new_dir.y * c;
+		new_dir.x = tx;
+		new_dir.y = ty;
+
+		m_Dir = new_dir;
+
+		vec2 To = m_Pos + new_dir * 100; // * m_Energy
+
 		if(!HitCharacter(m_Pos, To))
 		{
-			// intersected
 			m_From = m_Pos;
 			m_Pos = To;
-
-			vec2 TempPos = m_Pos;
-			vec2 TempDir = m_Dir * 4.0f;
-
-			GameServer()->Collision()->MovePoint(&TempPos, &TempDir, 1.0f, 0);
-			m_Pos = TempPos;
-			m_Dir = normalize(TempDir);
-
-			m_Energy -= distance(m_From, m_Pos) + GameServer()->Tuning()->m_LaserBounceCost;
-			m_Bounces++;
-
-			if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum)
-				m_Energy = -1;
-
-			GameServer()->CreateSound(m_Pos, SOUND_RIFLE_BOUNCE);
-
-			if(m_Bounces == 1 && g_Config.m_SvLaserjumps && GameServer()->m_pController->IsInstagib())
-				GameServer()->CreateExplosion(m_Pos, m_Owner, WEAPON_GAME, false);
+			m_Energy = m_Energy - 100;//-1;
 		}
-	}
-	else
-	{
-		if(!HitCharacter(m_Pos, To))
+	} else {
+		vec2 To = m_Pos + m_Dir * m_Energy;
+
+		if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
 		{
-			m_From = m_Pos;
-			m_Pos = To;
-			m_Energy = -1;
+			if(!HitCharacter(m_Pos, To))
+			{
+				// intersected
+				m_From = m_Pos;
+				m_Pos = To;
+
+				vec2 TempPos = m_Pos;
+				vec2 TempDir = m_Dir * 4.0f;
+
+				GameServer()->Collision()->MovePoint(&TempPos, &TempDir, 1.0f, 0);
+				m_Pos = TempPos;
+				m_Dir = normalize(TempDir);
+
+				m_Energy -= distance(m_From, m_Pos) + GameServer()->Tuning()->m_LaserBounceCost;
+				m_Bounces++;
+
+				if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum)
+					m_Energy = -1;
+
+				GameServer()->CreateSound(m_Pos, SOUND_RIFLE_BOUNCE);
+
+				if(m_Bounces == 1 && g_Config.m_SvLaserjumps && GameServer()->m_pController->IsInstagib())
+					GameServer()->CreateExplosion(m_Pos, m_Owner, WEAPON_GAME, false);
+			}
+		}
+		else
+		{
+			if(!HitCharacter(m_Pos, To))
+			{
+				m_From = m_Pos;
+				m_Pos = To;
+				m_Energy = -1;
+			}
 		}
 	}
 }

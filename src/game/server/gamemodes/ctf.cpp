@@ -16,6 +16,8 @@ CGameControllerCTF::CGameControllerCTF(class CGameContext *pGameServer, int Type
 	m_apFlags[0] = 0;
 	m_apFlags[1] = 0;
 	m_Flags = TypeFlags;
+	m_flagstand_temp_i_0 = 0;
+	m_flagstand_temp_i_1 = 0;
 	m_pGameType = (IsInstagib()) ? "iCTF+" : "CTF+";
 	m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
 }
@@ -28,14 +30,32 @@ bool CGameControllerCTF::OnEntity(int Index, vec2 Pos)
 	int Team = -1;
 	if(Index == ENTITY_FLAGSTAND_RED) Team = TEAM_RED;
 	if(Index == ENTITY_FLAGSTAND_BLUE) Team = TEAM_BLUE;
-	if(Team == -1 || m_apFlags[Team])
-		return false;
 
-	CFlag *F = new CFlag(&GameServer()->m_World, Team);
-	F->m_StandPos = Pos;
-	F->m_Pos = Pos;
-	m_apFlags[Team] = F;
-	GameServer()->m_World.InsertEntity(F);
+	if(!(Team == -1 || m_apFlags[Team])) {
+		CFlag *F = new CFlag(&GameServer()->m_World, Team);
+		//F->m_StandPos = Pos;
+		F->m_Pos = Pos;
+		m_apFlags[Team] = F;
+		GameServer()->m_World.InsertEntity(F);
+	}
+
+	if (Team == TEAM_RED && m_flagstand_temp_i_0 < 10) {
+		//m_flagstands_0[m_flagstand_temp_i_0] = Pos;
+		m_apFlags[Team]->m_StandPositions[m_flagstand_temp_i_0] = Pos;
+		m_flagstand_temp_i_0++;
+		m_apFlags[Team]->m_no_stands = m_flagstand_temp_i_0;
+	}
+	if (Team == TEAM_BLUE && m_flagstand_temp_i_1 < 10) {
+		//m_flagstands_1[m_flagstand_temp_i_1] = Pos;
+		m_apFlags[Team]->m_StandPositions[m_flagstand_temp_i_1] = Pos;
+		m_flagstand_temp_i_1++;
+		m_apFlags[Team]->m_no_stands = m_flagstand_temp_i_1;
+	}
+
+	if (Team == -1) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -215,6 +235,46 @@ void CGameControllerCTF::Tick()
 		}
 		else
 		{
+			// teleports
+			if (GameServer()->Collision()->GetCollisionAt(F->m_Pos.x, F->m_Pos.y)&CCollision::COLFLAG_TELEONE)
+			{
+				if (!F->m_inTele)
+				{
+					F->m_inTele = true;
+					int x = GameServer()->Collision()->getTeleX(0);
+					int y = GameServer()->Collision()->getTeleY(0);
+					int tx = GameServer()->Collision()->getTeleX(1);
+					int ty = GameServer()->Collision()->getTeleY(1);
+					vec2 start = {x, y};
+					vec2 end = {tx, ty};
+					//vec2 oneTile = {ms_PhysSize * 1.5, 0};
+					F->m_Pos = F->m_Pos - start * 32 + end * 32;
+				}
+				//std::cout << "TELE 1" << std::endl;
+				// do some teleporting
+			}
+			else if (GameServer()->Collision()->GetCollisionAt(F->m_Pos.x, F->m_Pos.y)&CCollision::COLFLAG_TELETWO)
+			{
+				if (!F->m_inTele)
+				{
+					F->m_inTele = true;
+					int x = GameServer()->Collision()->getTeleX(1);
+					int y = GameServer()->Collision()->getTeleY(1);
+					int tx = GameServer()->Collision()->getTeleX(0);
+					int ty = GameServer()->Collision()->getTeleY(0);
+					vec2 start = {x, y};
+					vec2 end = {tx, ty};
+					//vec2 oneTile = {ms_PhysSize * 1.5, 0};
+					F->m_Pos = F->m_Pos - start * 32 + end * 32;
+				}
+				//std::cout << "TELE 2" << std::endl;
+			}
+			else
+			{
+				// the flag is not in a teleport
+				F->m_inTele = false;
+			}
+
 			CCharacter *apCloseCCharacters[MAX_CLIENTS];
 			int Num = GameServer()->m_World.FindEntities(F->m_Pos, CFlag::ms_PhysSize, (CEntity**)apCloseCCharacters, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 			for(int i = 0; i < Num; i++)

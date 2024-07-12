@@ -19,6 +19,9 @@ CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, 
 	m_Weapon = Weapon;
 	m_StartTick = Server()->Tick();
 	m_Explosive = Explosive;
+	m_inTele = false;
+
+	m_Bounces = 0; // for bouncy grenades
 
 	GameWorld()->InsertEntity(this);
 }
@@ -69,16 +72,87 @@ void CProjectile::Tick()
 
 	if(TargetChr || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
-		if(m_LifeSpan >= 0 || m_Weapon == WEAPON_GRENADE)
-			GameServer()->CreateSound(CurPos, m_SoundImpact);
+		if (Collide && m_Weapon == WEAPON_GRENADE && g_Config.m_SvBouncyGrenade) {
 
-		if(m_Explosive)
-			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, false);
+			m_Pos = PrevPos;
+			m_Direction = m_Direction * -1;
+			m_StartTick = Server()->Tick();
+			m_LifeSpan = m_LifeSpan;
 
-		else if(TargetChr)
-			TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), m_Damage, m_Owner, m_Weapon);
+			GameServer()->CreateSound(CurPos, SOUND_GRENADE_FIRE);
+			m_Force = 1;
+			// CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_GRENADE,
+			// 	m_Owner,
+			// 	PrevPos,
+			// 	m_Direction * -1,
+			// 	m_LifeSpan,//(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime),
+			// 	1, true, 0, SOUND_GRENADE_EXPLODE, WEAPON_GRENADE);
+			if (m_LifeSpan < 0) {
+				if(m_Explosive)
+					GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, false);
 
-		GameServer()->m_World.DestroyEntity(this);
+				GameServer()->m_World.DestroyEntity(this);
+			}
+		} else {
+			if(m_LifeSpan >= 0 || m_Weapon == WEAPON_GRENADE)
+				GameServer()->CreateSound(CurPos, m_SoundImpact);
+
+			if(m_Explosive) 
+				GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, false);
+
+			else if(TargetChr)
+				TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), m_Damage, m_Owner, m_Weapon);
+
+			GameServer()->m_World.DestroyEntity(this);
+		}
+	} else if (g_Config.m_SvProjectileTeleport) {
+		if (GameServer()->Collision()->GetCollisionAt(CurPos.x, CurPos.y)&CCollision::COLFLAG_TELEONE) {
+			if (!m_inTele) {
+				m_inTele = true;
+				int x = GameServer()->Collision()->getTeleX(0);
+				int y = GameServer()->Collision()->getTeleY(0);
+				int tx = GameServer()->Collision()->getTeleX(1);
+				int ty = GameServer()->Collision()->getTeleY(1);
+				vec2 start = {x, y};
+				vec2 end = {tx, ty};
+				m_Pos = m_Pos - start * 32 + end * 32;
+			}
+		} else if (GameServer()->Collision()->GetCollisionAt(CurPos.x, CurPos.y)&CCollision::COLFLAG_TELETWO) {
+			if (!m_inTele) {
+				m_inTele = true;
+				int x = GameServer()->Collision()->getTeleX(1);
+				int y = GameServer()->Collision()->getTeleY(1);
+				int tx = GameServer()->Collision()->getTeleX(0);
+				int ty = GameServer()->Collision()->getTeleY(0);
+				vec2 start = {x, y};
+				vec2 end = {tx, ty};
+				m_Pos = m_Pos - start * 32 + end * 32;
+			}
+		} else if (GameServer()->Collision()->GetCollisionAt(CurPos.x, CurPos.y)&CCollision::COLFLAG_TELETHREE) {
+			if (!m_inTele) {
+				m_inTele = true;
+				int x = GameServer()->Collision()->getTeleX(2);
+				int y = GameServer()->Collision()->getTeleY(2);
+				int tx = GameServer()->Collision()->getTeleX(3);
+				int ty = GameServer()->Collision()->getTeleY(3);
+				vec2 start = {x, y};
+				vec2 end = {tx, ty};
+				m_Pos = m_Pos - start * 32 + end * 32;
+			}
+		} else if (GameServer()->Collision()->GetCollisionAt(CurPos.x, CurPos.y)&CCollision::COLFLAG_TELEFOUR) {
+			if (!m_inTele) {
+				m_inTele = true;
+				int x = GameServer()->Collision()->getTeleX(3);
+				int y = GameServer()->Collision()->getTeleY(3);
+				int tx = GameServer()->Collision()->getTeleX(2);
+				int ty = GameServer()->Collision()->getTeleY(2);
+				vec2 start = {x, y};
+				vec2 end = {tx, ty};
+				m_Pos = m_Pos - start * 32 + end * 32;
+			}
+		} else {
+			m_inTele = false;
+		}
 	}
 }
 

@@ -6,11 +6,14 @@
 #include <game/generated/protocol.h>
 
 #include "entities/pickup.h"
+#include "entities/structure.h"
 #include "gamecontroller.h"
 #include "gamecontext.h"
 
 #include <stdio.h>
 #include <time.h>
+#include <string>
+#include <game/collision.h>
 
 IGameController::IGameController(class CGameContext *pGameServer)
 {
@@ -168,6 +171,30 @@ bool IGameController::OnEntity(int Index, vec2 Pos)
 			SubType = WEAPON_NINJA;
 		}
 	}
+	if(Index == ENTITY_GRENADE_FOUNTAIN)
+	{
+		int d = -1;
+		if (GameServer()->Collision()->CheckPoint(Pos.x, Pos.y - 32))
+			d = 1;
+
+		CGameWorld *g = &GameServer()->m_World;
+		CStructure *pProj = new CStructure(g, WEAPON_GRENADE,
+				-1,
+				Pos,
+				{0,d});
+	}
+	else if(Index == ENTITY_GRENADE_FOUNTAIN_HORIZONTAL)
+	{
+		int d = -1;
+		if (GameServer()->Collision()->CheckPoint(Pos.x - 32, Pos.y))
+			d = 1;
+
+		CGameWorld *g = &GameServer()->m_World;
+		CStructure *pProj = new CStructure(g, WEAPON_GRENADE,
+				-1,
+				Pos,
+				{d,0});
+	}
 
 	if(Type != -1)
 	{
@@ -189,6 +216,19 @@ void IGameController::EndRound()
 	m_SuddenDeath = 0;
 	GameServer()->m_SpecMuted = false;
 	SaveStats();
+
+	for(int i = 0; i < MAX_CLIENTS; i++) {
+		std::string name = Server()->ClientName(i);
+		Server()->m_playerNames[i] = name;
+		//GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", Server()->ClientName(i));
+		
+		if (name.compare("(invalid)") != 0 && name.compare("(connecting)") != 0) {
+			if (GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS) {
+				std::string name = "(invalid)";
+				Server()->m_playerNames[i] = name;
+			}
+		}
+	}
 }
 
 void IGameController::ResetGame()
