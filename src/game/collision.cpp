@@ -18,6 +18,8 @@ CCollision::CCollision()
 	m_Width = 0;
 	m_Height = 0;
 	m_pLayers = 0;
+	for (int i = 0; i < 4; i++) 
+		m_telePositions[i] = {0,0,false};
 }
 
 void CCollision::Init(class CLayers *pLayers)
@@ -30,6 +32,8 @@ void CCollision::Init(class CLayers *pLayers)
 	for(int i = 0; i < m_Width*m_Height; i++)
 	{
 		int Index = m_pTiles[i].m_Index;
+		int x = i % m_Width;
+		int y = std::floor(i/m_Width);
 
 		if(Index > 128)
 			continue;
@@ -44,6 +48,29 @@ void CCollision::Init(class CLayers *pLayers)
 			break;
 		case TILE_NOHOOK:
 			m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_NOHOOK;
+			break;
+		case TILE_TELEONE:
+			if (m_telePositions[0].exists == false)
+				m_telePositions[0] = {x, y, true};
+			m_pTiles[i].m_Index = COLFLAG_TELEONE;
+			break;
+		case TILE_TELETWO:
+			if (m_telePositions[1].exists == false)
+				m_telePositions[1] = {x, y, true};
+			m_pTiles[i].m_Index = COLFLAG_TELETWO;
+			break;
+		case TILE_TELETHREE:
+			if (m_telePositions[2].exists == false)
+				m_telePositions[2] = {x, y, true};
+			m_pTiles[i].m_Index = COLFLAG_TELETHREE;
+			break;
+		case TILE_TELEFOUR:
+			if (m_telePositions[3].exists == false)
+				m_telePositions[3] = {x, y, true};
+			m_pTiles[i].m_Index = COLFLAG_TELEFOUR;
+			break;
+		case TILE_SLOWDEATH:
+			m_pTiles[i].m_Index = COLFLAG_SLOWDEATH;
 			break;
 		default:
 			m_pTiles[i].m_Index = 0;
@@ -201,4 +228,14 @@ void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elas
 
 	*pInoutPos = Pos;
 	*pInoutVel = Vel;
+}
+
+// gets X of a teleport position
+int CCollision::getTeleX(int index) {
+	return m_telePositions[index].x;
+}
+
+// gets Y of a teleport position
+int CCollision::getTeleY(int index) {
+	return m_telePositions[index].y;
 }

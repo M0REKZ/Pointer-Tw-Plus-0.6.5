@@ -69,6 +69,8 @@ MACRO_CONFIG_STR(SvGametype, sv_gametype, 32, "dm", CFGFLAG_SERVER, "Game type (
 MACRO_CONFIG_INT(SvTournamentMode, sv_tournament_mode, 0, 0, 1, CFGFLAG_SERVER, "Tournament mode. When enabled, players joins the server as spectator")
 MACRO_CONFIG_INT(SvSpamprotection, sv_spamprotection, 1, 0, 1, CFGFLAG_SERVER, "Spam protection")
 
+MACRO_CONFIG_INT(SvSpamEmoticons, sv_spamemoticons, 1, 0, 1, CFGFLAG_SERVER, "Whether or not to allow spamming emoticons (overrides sv_spamprotection if set to true)")
+
 MACRO_CONFIG_INT(SvRespawnDelayTDM, sv_respawn_delay_tdm, 3, 0, 10, CFGFLAG_SERVER, "Time needed to respawn after death in tdm gametype")
 
 MACRO_CONFIG_INT(SvSpectatorSlots, sv_spectator_slots, 0, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Number of slots to reserve for spectators")
@@ -153,4 +155,43 @@ MACRO_CONFIG_INT(SvKillingspreeAward, sv_kspree_award, 0, 0, 1, CFGFLAG_SERVER, 
 MACRO_CONFIG_INT(SvKillingspreeAwardLasers, sv_kspree_award_laser, 3, 1, 10, CFGFLAG_SERVER, "How many lasers will shot when you got the award")
 MACRO_CONFIG_INT(SvKillingspreeAwardLasersSplit, sv_kspree_award_laser_split, 1, 1, 10, CFGFLAG_SERVER, "Split of the lasers while having the award")
 MACRO_CONFIG_INT(SvKillingspreeAwardFiredelay, sv_kspree_award_laser_firedelay, 100, 0, 800, CFGFLAG_SERVER, "Firedelay of the weapon when you got the award")
+
+//ninja and custom silly weapons
+MACRO_CONFIG_INT(SvNinjaConstantSpeed, sv_ninja_constant_speed, 10, -50, 50, CFGFLAG_SERVER, "What speed the ninja should have after slashing")
+MACRO_CONFIG_INT(SvNinjaInvincible, sv_ninja_invincible, 0, 0, 1, CFGFLAG_SERVER, "Whether or not to have the ninja not take any damage")
+MACRO_CONFIG_INT(SvNinjaAllWeapons, sv_ninja_weapon_fight, 0, 0, 1, CFGFLAG_SERVER, "Whether or not to have the ninja use all other weapons while slashing")
+MACRO_CONFIG_INT(SvNinjaHeartBonus, sv_ninja_bonus_heart, 0, 0, 10, CFGFLAG_SERVER, "Amount of hearts to give when ninja is picked up")
+MACRO_CONFIG_INT(SvNinjaArmorBonus, sv_ninja_bonus_armor, 0, 0, 10, CFGFLAG_SERVER, "Amount of armor/shields to give when ninja is picked up")
+
+MACRO_CONFIG_INT(SvPlasmaGun, sv_plasmagun, 0, 0, 1, CFGFLAG_SERVER, "Whether to enable the plasmagun replacing the laser rifle")
+MACRO_CONFIG_INT(SvPlasmaGunReach, sv_plasmagun_reach, 500, 100, 9000, CFGFLAG_SERVER, "How far the plasmagun should reach")
+MACRO_CONFIG_INT(SvPlasmaGunFireDelay, sv_plasmagun_fire_delay, 600, 0, 3000, CFGFLAG_SERVER, "How fast the plasmagun should reload")
+
+MACRO_CONFIG_INT(SvBouncyGrenade, sv_bouncy_grenade, 0, 0, 1, CFGFLAG_SERVER, "(buggy WIP) Whether to enable bouncy grenades")
+MACRO_CONFIG_INT(SvBouncyGrenadeN, sv_bouncy_grenade_n, 5, 0, 50, CFGFLAG_SERVER, "(buggy WIP) (currently does not change anything)")
+
+MACRO_CONFIG_INT(SvExplosiveShotgun, sv_explosive_shotgun, 0, 0, 1, CFGFLAG_SERVER, "whether or not shotgun bullets should be explosive")
+
+MACRO_CONFIG_INT(SvPistolAuto, sv_pistol_auto, 1, 0, 1, CFGFLAG_SERVER, "Whether or not the pistol should autofire")
+
+// other features
+MACRO_CONFIG_INT(SvProjectileTeleport, sv_projectile_tele, 1, 0, 1, CFGFLAG_SERVER, "Whether or not to teleport projectiles when they touch a teleport zone")
+
+MACRO_CONFIG_INT(SvGrenadeFountain, sv_grenade_fountain, 1, 0, 1, CFGFLAG_SERVER, "Whether to enable grenade fountain tiles in maps")
+MACRO_CONFIG_INT(SvGrenadeFountainHarm, sv_grenade_fountain_harm, 0, 0, 1, CFGFLAG_SERVER, "Whether grenade fountains should do damage")
+MACRO_CONFIG_INT(SvGrenadeFountainDelay, sv_grenade_fountain_delay, 1500, 0, 10000, CFGFLAG_SERVER, "Grenade fountain fire delay (default: 1500)")
+
+MACRO_CONFIG_INT(SvSlowDeathTicks, sv_slowdeath_ticks, 10, 0, 100, CFGFLAG_SERVER, "How many ticks is a player allowed to be in a slow death zone before they are hurt?")
+
+MACRO_CONFIG_INT(SvHookkill, sv_hook_kill, 1, 0, 1, CFGFLAG_SERVER, "(WIP) Whether or not killing tees by hooking them into spikes should count as a kill")
+
+// MACRO_CONFIG_INT(SvDiscordinviteProtection, sv_discordinvite_mute, 0, 0, 2, CFGFLAG_SERVER, "Whether or not to mute/kick players sending discord invites")
+
+MACRO_CONFIG_INT(SvChatMe, sv_slash_me, 1, 0, 1, CFGFLAG_SERVER, "Whether or not to enable /me usage")
+
+//MACRO_CONFIG_INT(SvTuneReset, sv_tune_reset, 5, 0, 10, CFGFLAG_SERVER, "(WIP) Whether tuning is reset after each map change or not")
+
+//
+MACRO_CONFIG_STR(SvShutdownMessage, sv_shutdown_msg, 128, "Server shutdown", CFGFLAG_SERVER, "Message displayed on server shutdown (old, use shutdown <message>)")
+
 #endif
