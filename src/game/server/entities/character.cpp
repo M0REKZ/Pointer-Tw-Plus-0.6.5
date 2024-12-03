@@ -559,7 +559,7 @@ void CCharacter::FireWeapon()
 
 			int ShotSpread = 2;
 
-			for (int i = -ShotSpread; i <= ShotSpread; ++i)
+			for(int i = -ShotSpread; i <= ShotSpread; ++i)
 			{
 				float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
 				float a = GetAngle(Direction);

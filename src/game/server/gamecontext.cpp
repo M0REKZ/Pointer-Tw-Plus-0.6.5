@@ -683,6 +683,16 @@ void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 
 	if(PlIngame == 0)
 		m_World.m_Paused = false;
+	// check if all players left and game is paused => unpause
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if(m_apPlayers[i] && m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+			return;
+	}
+	if(m_World.m_Paused)
+	{
+		m_pController->TogglePause();
+	}
 }
 
 void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
@@ -1362,11 +1372,7 @@ void CGameContext::ConTuneDump(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConPause(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	if(pSelf->m_pController->IsGameOver())
-		return;
-
-	pSelf->m_World.m_Paused ^= 1;
+	pSelf->m_pController->TogglePause();
 }
 
 void CGameContext::ConChangeMap(IConsole::IResult *pResult, void *pUserData)
