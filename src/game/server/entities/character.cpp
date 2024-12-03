@@ -1003,10 +1003,10 @@ void CCharacter::Tick()
 	}
 
 	// healthzone and armorzone
-	if (GameServer()->Collision()->GetCollisionAtNew(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_HEALTHZONE ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_HEALTHZONE ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_HEALTHZONE ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_HEALTHZONE)
+	if (GameServer()->Collision()->GetCollisionAt(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_HEALTHZONE ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_HEALTHZONE ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_HEALTHZONE ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_HEALTHZONE)
 	{
 		m_healthArmorZoneTick--;
 		if (m_healthArmorZoneTick < 0) {
@@ -1020,10 +1020,10 @@ void CCharacter::Tick()
 		}
 	}
 	if (!GameServer()->m_pController->IsInstagib() && (
-			GameServer()->Collision()->GetCollisionAtNew(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_ARMORZONE ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_ARMORZONE ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_ARMORZONE ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_ARMORZONE))
+			GameServer()->Collision()->GetCollisionAt(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_ARMORZONE ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_ARMORZONE ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_ARMORZONE ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_ARMORZONE))
 	{
 		m_healthArmorZoneTick--;
 		if (m_healthArmorZoneTick < 0) {
@@ -1036,10 +1036,10 @@ void CCharacter::Tick()
 			m_healthArmorZoneTick = g_Config.m_SvHealthArmorZoneTicks;
 		}
 	}
-if ((GameServer()->Collision()->GetCollisionAtNew(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST ||
-			 GameServer()->Collision()->GetCollisionAtNew(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST))
+if ((GameServer()->Collision()->GetCollisionAt(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST ||
+			 GameServer()->Collision()->GetCollisionAt(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f) == TILE_SPEEDUPFAST))
 	{
 		m_Core.m_Vel += {0, -5};
 	}
@@ -1111,8 +1111,8 @@ void CCharacter::TickDefered()
 
 	if (Events & COREEVENT_GROUND_JUMP) {
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, Mask);
-		if (GameServer()->Collision()->GetCollisionAtNew(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + 2*WIDTH_TILE) == TILE_SPEEDUPFAST ||
-			GameServer()->Collision()->GetCollisionAtNew(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + 2*WIDTH_TILE) == TILE_SPEEDUPFAST)
+		if (GameServer()->Collision()->GetCollisionAt(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + 2*WIDTH_TILE) == TILE_SPEEDUPFAST ||
+			GameServer()->Collision()->GetCollisionAt(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + 2*WIDTH_TILE) == TILE_SPEEDUPFAST)
 			m_Core.m_Vel = {m_Core.m_Vel.x, m_Core.m_Vel.y * 2};
 	}
 
